@@ -1704,7 +1704,8 @@ def qc_spectrum_na(nrtd,ph1=0,ph2 = 0):
                 
     return(nrtd)
 
-def integrate_spectra(nrtd,wmin=None,wmax=None):
+def integrate_spectra(nrtd,wmin=None,wmax=None,wmax_rmax=None):
+
     """ Integrates Raman Spectra
     Notes:
         -Does NOT consider bleach! If you want to include the 'bleach' in this analysis, 
@@ -1731,6 +1732,11 @@ def integrate_spectra(nrtd,wmin=None,wmax=None):
         indmax = find_nearest(myinds,wmax)+1
     else:
         indmax = len(myinds)
+
+    if wmax_rmax:#If the upper limit is specified
+        indmax_rmax = find_nearest(myinds,wmax_rmax)+1
+    else:
+        indmax_rmax = len(myinds)
            
     if wmin:#If the lower limit is specified
         indmin = find_nearest(myinds,wmin)
@@ -2061,7 +2067,11 @@ def background_als_core_nu(y,p=0.01,lmb=1e6,max_iter=10,handle_end=False):
     m = len(y) #get the length of the array
     w=np.ones(m) #make the initial weight array
     D = sparse.dia_matrix(([np.ones(m),-2*np.ones(m),np.ones(m)],[0,-1,-2]),shape=[m,m-2]) #this is used for the smoother
-    DD = lmb*D*D.H
+    #DD = lmb*D*D.H# Old doesn't work
+    #The current version needs to be updated to newest matrix format. 
+    #Currently the spsolve call throws a warning related to the format of DD. 
+    DD = lmb*D*D.T.conjugate()
+   
     
     for i in range(max_iter):
         W = sparse.spdiags(w,0,m,m) #Sparse matrix of weights
@@ -2105,7 +2115,7 @@ def plot_format(fs=16):
     defLW = 2
     #Format the plots
     
-    font = {'family' : 'normal',
+    font = {'family' : 'sans-serif',
     'weight' : fWght,
     'size'   : fSize}
     
